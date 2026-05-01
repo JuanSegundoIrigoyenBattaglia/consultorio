@@ -2,11 +2,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/fireba
 import {
   addDoc,
   collection,
-  getDocs,
   getFirestore,
-  query,
-  serverTimestamp,
-  where
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
@@ -48,12 +45,6 @@ form.addEventListener("submit", async (event) => {
   setLoading(true);
 
   try {
-    const isTaken = await appointmentExists(appointment.fecha, appointment.horario);
-
-    if (isTaken) {
-      showStatus("Ese horario ya esta reservado. Elegi otro turno.", "error");
-      return;
-    }
 
     await addDoc(appointmentsCollection, {
       ...appointment,
@@ -72,16 +63,6 @@ form.addEventListener("submit", async (event) => {
   }
 });
 
-async function appointmentExists(fecha, horario) {
-  const appointmentQuery = query(
-    appointmentsCollection,
-    where("fecha", "==", fecha),
-    where("horario", "==", horario)
-  );
-  const querySnapshot = await getDocs(appointmentQuery);
-
-  return !querySnapshot.empty;
-}
 
 function setLoading(isLoading) {
   submitButton.disabled = isLoading;

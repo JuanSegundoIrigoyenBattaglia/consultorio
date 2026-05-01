@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sonrisa Clara | Consultorio Odontologico</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#inicio" aria-label="Ir al inicio">
+      <span class="brand-mark">SC</span>
+      <span>Sonrisa Clara</span>
+    </a>
+
+    <nav class="main-nav" aria-label="Navegacion principal">
+      <a href="#servicios">Servicios</a>
+      <a href="#turnos">Turnos</a>
+      <a href="#contacto">Contacto</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" id="inicio">
+      <div class="hero-content">
+        <p class="eyebrow">Consultorio odontologico</p>
+        <h1>Reserva tu turno en pocos pasos</h1>
+        <p class="hero-copy">
+          Atencion profesional para controles, limpiezas, blanqueamientos y urgencias odontologicas.
+        </p>
+        <a class="primary-link" href="#turnos">Sacar turno</a>
+      </div>
+    </section>
+
+    <section class="services-section" id="servicios" aria-labelledby="servicios-titulo">
+      <div class="section-heading">
+        <p class="eyebrow">Tratamientos</p>
+        <h2 id="servicios-titulo">Servicios principales</h2>
+      </div>
+
+      <div class="services-grid">
+        <article class="service-card">
+          <h3>Control odontologico</h3>
+          <p>Revision general, diagnostico inicial y recomendaciones de cuidado.</p>
+        </article>
+        <article class="service-card">
+          <h3>Limpieza dental</h3>
+          <p>Profilaxis profesional para mantener en buen estado dientes y encias.</p>
+        </article>
+        <article class="service-card">
+          <h3>Estetica dental</h3>
+          <p>Opciones de blanqueamiento y restauraciones para mejorar tu sonrisa.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="appointment-section" id="turnos" aria-labelledby="turnos-titulo">
+      <div class="appointment-copy">
+        <p class="eyebrow">Turnos online</p>
+        <h2 id="turnos-titulo">Elegir fecha y horario</h2>
+        <p>
+          Completa los datos del formulario. Al conectar Firebase, cada solicitud quedara guardada en Firestore.
+        </p>
+      </div>
+
+      <form class="appointment-form" id="appointmentForm">
+        <label for="patientName">
+          Nombre y apellido
+          <input id="patientName" name="patientName" type="text" autocomplete="name" placeholder="Ej: Ana Perez" required>
+        </label>
+
+        <label for="patientPhone">
+          Telefono
+          <input id="patientPhone" name="patientPhone" type="tel" autocomplete="tel" placeholder="Ej: 11 2345 6789" required>
+        </label>
+
+        <label for="appointmentDate">
+          Fecha
+          <input id="appointmentDate" name="appointmentDate" type="date" required>
+        </label>
+
+        <label for="appointmentTime">
+          Horario
+          <select id="appointmentTime" name="appointmentTime" required>
+            <option value="">Seleccionar horario</option>
+            <option value="09:00">09:00</option>
+            <option value="09:30">09:30</option>
+            <option value="10:00">10:00</option>
+            <option value="10:30">10:30</option>
+            <option value="11:00">11:00</option>
+            <option value="11:30">11:30</option>
+            <option value="15:00">15:00</option>
+            <option value="15:30">15:30</option>
+            <option value="16:00">16:00</option>
+            <option value="16:30">16:30</option>
+            <option value="17:00">17:00</option>
+            <option value="17:30">17:30</option>
+          </select>
+        </label>
+
+        <button type="submit" id="submitButton">Confirmar turno</button>
+        <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section class="contact-section" id="contacto" aria-labelledby="contacto-titulo">
+      <div>
+        <p class="eyebrow">Contacto</p>
+        <h2 id="contacto-titulo">Estamos en Buenos Aires</h2>
+      </div>
+      <p>Av. Salud Dental 1234 · Lunes a viernes de 9:00 a 18:00 · contacto@sonrisaclara.com</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Sonrisa Clara Consultorio Odontologico</p>
+  </footer>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,9 +1,9 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
 import {
-  addDoc,
-  collection,
+  doc,
   getFirestore,
-  serverTimestamp
+  serverTimestamp,
+  setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
@@ -14,7 +14,6 @@ const dateInput = document.querySelector("#appointmentDate");
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const appointmentsCollection = collection(db, "turnos");
 
 const today = new Date();
 today.setHours(0, 0, 0, 0);
@@ -45,8 +44,10 @@ form.addEventListener("submit", async (event) => {
   setLoading(true);
 
   try {
+    const appointmentId = `${appointment.fecha}_${appointment.horario}`;
+    const appointmentRef = doc(db, "turnos", appointmentId);
 
-    await addDoc(appointmentsCollection, {
+    await setDoc(appointmentRef, {
       ...appointment,
       estado: "pendiente",
       creadoEn: serverTimestamp()
@@ -57,7 +58,7 @@ form.addEventListener("submit", async (event) => {
     showStatus("Turno reservado correctamente. Te esperamos.", "success");
   } catch (error) {
     console.error("Error al reservar el turno:", error);
-    showStatus("No se pudo guardar el turno. Revisa la configuracion de Firebase.", "error");
+    showStatus("Ese horario ya esta reservado o no se pudo guardar el turno.", "error");
   } finally {
     setLoading(false);
   }

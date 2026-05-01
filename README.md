@@ -19,6 +19,38 @@ Proyecto simple en HTML, CSS y JavaScript para reservar turnos de un consultorio
 5. Activa Firestore Database.
 6. Crea una coleccion llamada `turnos` o deja que se cree automaticamente al guardar el primer turno.
 
+## Reglas de Firestore
+
+Estas reglas permiten crear turnos, bloquean lecturas publicas y evitan sobreturnos usando un ID por fecha y horario.
+
+```js
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /turnos/{turnoId} {
+      allow create: if
+        turnoId == request.resource.data.fecha + "_" + request.resource.data.horario
+        && request.resource.data.keys().hasOnly([
+          'nombre',
+          'telefono',
+          'fecha',
+          'horario',
+          'estado',
+          'creadoEn'
+        ])
+        && request.resource.data.nombre is string
+        && request.resource.data.telefono is string
+        && request.resource.data.fecha is string
+        && request.resource.data.horario is string
+        && request.resource.data.estado == 'pendiente';
+
+      allow read, update, delete: if false;
+    }
+  }
+}
+```
+
 ## Probar localmente
 
 Podes abrir `index.html` en el navegador o usar una extension tipo Live Server de Visual Studio Code.

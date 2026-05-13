@@ -1,9 +1,9 @@
 export const firebaseConfig = {
-  apiKey: "AIzaSyC0ajvYK_-HrEvc9WoP8IygK8SMCEp8AO4",
-  authDomain: "consultorio-2d6fc.firebaseapp.com",
-  projectId: "consultorio-2d6fc",
-  storageBucket: "consultorio-2d6fc.firebasestorage.app",
-  messagingSenderId: "246340893999",
-  appId: "1:246340893999:web:3193abc37e08db1e99f5da",
-  measurementId: "G-DE1VM5WV76"
+  apiKey: "AIzaSyBECMM0dWobdaYe5gGSFVPtciJrWJ9e1TE",
+  authDomain: "consultorio-f58ef.firebaseapp.com",
+  projectId: "consultorio-f58ef",
+  storageBucket: "consultorio-f58ef.firebasestorage.app",
+  messagingSenderId: "496831442217",
+  appId: "1:496831442217:web:bb254f9540f0dd3c4bdb38",
+  measurementId: "G-40RH40R39L"
 };

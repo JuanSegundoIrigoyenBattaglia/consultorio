@@ -19,6 +19,7 @@
     <nav class="main-nav" aria-label="Navegacion principal">
       <a href="#servicios">Servicios</a>
       <a href="#turnos">Turnos</a>
+      <a href="#adminPanel" id="adminNavLink" hidden>Administracion</a>
       <a href="#contacto">Contacto</a>
     </nav>
   </header>
@@ -62,8 +63,15 @@
         <p class="eyebrow">Turnos online</p>
         <h2 id="turnos-titulo">Elegir fecha y horario</h2>
         <p>
-          Completa los datos del formulario. Al conectar Firebase, cada solicitud quedara guardada en Firestore.
+          Inicia sesion con Google para ver horarios disponibles y reservar tu turno.
         </p>
+        <div class="auth-panel">
+          <p id="authStatus">No iniciaste sesion.</p>
+          <div class="auth-actions">
+            <button class="secondary-button" type="button" id="loginButton">Ingresar con Google</button>
+            <button class="secondary-button" type="button" id="logoutButton" hidden>Cerrar sesion</button>
+          </div>
+        </div>
       </div>
 
       <form class="appointment-form" id="appointmentForm">
@@ -81,6 +89,8 @@
           Fecha
           <input id="appointmentDate" name="appointmentDate" type="date" required>
         </label>
+
+        <p class="availability-status" id="availabilityStatus">Inicia sesion y elegi una fecha para ver horarios.</p>
 
         <label for="appointmentTime">
           Horario
@@ -106,12 +116,41 @@
       </form>
     </section>
 
+    <section class="admin-section" id="adminPanel" hidden aria-labelledby="admin-titulo">
+      <div class="section-heading">
+        <p class="eyebrow">Administracion</p>
+        <h2 id="admin-titulo">Turnos reservados</h2>
+      </div>
+      <div class="admin-toolbar">
+        <button class="secondary-button" type="button" id="refreshAdminButton">Actualizar turnos</button>
+        <p class="form-status" id="adminStatus" role="status" aria-live="polite"></p>
+      </div>
+      <div class="appointments-table-wrap">
+        <table class="appointments-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Horario</th>
+              <th>Paciente</th>
+              <th>Telefono</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="adminAppointments">
+            <tr>
+              <td colspan="5">Todavia no hay turnos cargados.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
     <section class="contact-section" id="contacto" aria-labelledby="contacto-titulo">
       <div>
         <p class="eyebrow">Contacto</p>
         <h2 id="contacto-titulo">Estamos en Buenos Aires</h2>
       </div>
-      <p>Av. Salud Dental 1234 · Lunes a viernes de 9:00 a 18:00 · contacto@sonrisaclara.com</p>
+      <p>Av. Salud Dental 1234 - Lunes a viernes de 9:00 a 18:00 - contacto@sonrisaclara.com</p>
     </section>
   </main>
 

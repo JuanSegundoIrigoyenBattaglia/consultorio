@@ -122,7 +122,8 @@ a {
 }
 
 .primary-link,
-.appointment-form button {
+.appointment-form button,
+.secondary-button {
   display: inline-flex;
   min-height: 48px;
   align-items: center;
@@ -139,13 +140,25 @@ a {
 }
 
 .primary-link:hover,
-.appointment-form button:hover {
+.appointment-form button:hover,
+.secondary-button:hover {
   background: var(--primary-dark);
   transform: translateY(-1px);
 }
 
+.secondary-button {
+  color: var(--primary);
+  background: #ffffff;
+  border: 1px solid #bad5cf;
+}
+
+.secondary-button:hover {
+  color: #ffffff;
+}
+
 .services-section,
 .appointment-section,
+.admin-section,
 .contact-section {
   padding: clamp(44px, 7vw, 82px) clamp(20px, 5vw, 72px);
 }
@@ -199,6 +212,26 @@ a {
   max-width: 540px;
 }
 
+.auth-panel {
+  margin-top: 24px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.auth-panel p {
+  margin: 0 0 14px;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.auth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .appointment-form {
   display: grid;
   gap: 18px;
@@ -245,9 +278,23 @@ a {
   transform: none;
 }
 
+.appointment-form input:disabled,
+.appointment-form select:disabled {
+  color: #77858a;
+  background: #eef4f2;
+  cursor: not-allowed;
+}
+
 .form-status {
   min-height: 24px;
   margin: 0;
+  font-weight: 700;
+}
+
+.availability-status {
+  min-height: 24px;
+  margin: 0;
+  color: var(--muted);
   font-weight: 700;
 }
 
@@ -264,6 +311,48 @@ a {
   grid-template-columns: minmax(260px, 0.8fr) minmax(280px, 1fr);
   gap: 32px;
   align-items: center;
+}
+
+.admin-section {
+  background: #ffffff;
+}
+
+.admin-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.appointments-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.appointments-table {
+  width: 100%;
+  min-width: 680px;
+  border-collapse: collapse;
+  background: #ffffff;
+}
+
+.appointments-table th,
+.appointments-table td {
+  padding: 14px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+.appointments-table th {
+  color: #25343a;
+  background: #eef7f5;
+  font-size: 0.9rem;
+}
+
+.appointments-table tr:last-child td {
+  border-bottom: 0;
 }
 
 .site-footer {

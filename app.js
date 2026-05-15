@@ -1,5 +1,9 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
 import {
+  initializeAppCheck,
+  ReCaptchaEnterpriseProvider
+} from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app-check.js";
+import {
   getAuth,
   GoogleAuthProvider,
   onAuthStateChanged,
@@ -33,8 +37,19 @@ const adminNavLink = document.querySelector("#adminNavLink");
 const adminAppointments = document.querySelector("#adminAppointments");
 const adminStatus = document.querySelector("#adminStatus");
 const refreshAdminButton = document.querySelector("#refreshAdminButton");
+const adminDateFilter = document.querySelector("#adminDateFilter");
+const clearAdminFilterButton = document.querySelector("#clearAdminFilterButton");
 
 const app = initializeApp(firebaseConfig);
+const appCheckSiteKey = firebaseConfig.appCheckSiteKey;
+
+if (appCheckSiteKey) {
+  initializeAppCheck(app, {
+    provider: new ReCaptchaEnterpriseProvider(appCheckSiteKey),
+    isTokenAutoRefreshEnabled: true
+  });
+}
+
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 const db = getFirestore(app);
@@ -42,6 +57,7 @@ const db = getFirestore(app);
 let currentUser = null;
 let isAdmin = false;
 let occupiedTimes = new Set();
+let adminAppointmentsCache = [];
 
 const today = new Date();
 today.setHours(0, 0, 0, 0);
@@ -56,7 +72,7 @@ loginButton.addEventListener("click", async () => {
     await signInWithPopup(auth, provider);
   } catch (error) {
     console.error("Error al iniciar sesion:", error);
-    showStatus("No se pudo iniciar sesion con Google.", "error");
+    showStatus(getAuthErrorMessage(error), "error");
   }
 });
 
@@ -66,6 +82,12 @@ logoutButton.addEventListener("click", async () => {
 
 dateInput.addEventListener("change", loadAvailability);
 refreshAdminButton.addEventListener("click", loadAdminAppointments);
+adminDateFilter.addEventListener("change", renderFilteredAdminAppointments);
+clearAdminFilterButton.addEventListener("click", () => {
+  adminDateFilter.value = "";
+  renderFilteredAdminAppointments();
+});
+adminAppointments.addEventListener("click", handleAdminAction);
 
 onAuthStateChanged(auth, async (user) => {
   currentUser = user;
@@ -115,12 +137,18 @@ form.addEventListener("submit", async (event) => {
     telefono: formData.get("patientPhone").trim(),
     fecha: formData.get("appointmentDate"),
     horario: formData.get("appointmentTime"),
+    aceptaPrivacidad: formData.get("privacyConsent") === "on",
     pacienteEmail: currentUser.email,
     pacienteUid: currentUser.uid
   };
 
   if (!appointment.nombre || !appointment.telefono || !appointment.fecha || !appointment.horario) {
     showStatus("Completa todos los campos para reservar el turno.", "error");
+    return;
+  }
+
+  if (!appointment.aceptaPrivacidad) {
+    showStatus("Para reservar, confirma que aceptas el uso de tus datos para gestionar el turno.", "error");
     return;
   }
 
@@ -166,7 +194,7 @@ form.addEventListener("submit", async (event) => {
     }
   } catch (error) {
     console.error("Error al reservar el turno:", error);
-    showStatus("Ese horario ya esta reservado o no se pudo guardar el turno.", "error");
+    showStatus(getFirestoreErrorMessage(error, "appointment"), "error");
     await loadAvailability();
   } finally {
     setLoading(false);
@@ -211,7 +239,7 @@ async function loadAvailability() {
       : "No quedan horarios disponibles para esa fecha.";
   } catch (error) {
     console.error("Error al consultar disponibilidad:", error);
-    availabilityStatus.textContent = "No se pudo consultar la disponibilidad.";
+    availabilityStatus.textContent = getFirestoreErrorMessage(error, "availability");
   } finally {
     timeSelect.disabled = false;
     submitButton.disabled = false;
@@ -241,21 +269,35 @@ async function loadAdminAppointments() {
 
   try {
     const snapshot = await getDocs(collection(db, "turnos"));
-    const appointments = snapshot.docs
-      .map((documentSnapshot) => documentSnapshot.data())
+    adminAppointmentsCache = snapshot.docs
+      .map((documentSnapshot) => ({
+        id: documentSnapshot.id,
+        ...documentSnapshot.data()
+      }))
       .sort((a, b) => `${a.fecha} ${a.horario}`.localeCompare(`${b.fecha} ${b.horario}`));
 
-    renderAdminAppointments(appointments);
-    adminStatus.textContent = `${appointments.length} turnos cargados.`;
+    renderFilteredAdminAppointments();
   } catch (error) {
     console.error("Error al cargar turnos:", error);
-    adminStatus.textContent = "No se pudieron cargar los turnos.";
+    adminStatus.textContent = getFirestoreErrorMessage(error, "admin");
   }
+}
+
+function renderFilteredAdminAppointments() {
+  const selectedDate = adminDateFilter.value;
+  const appointments = selectedDate
+    ? adminAppointmentsCache.filter((appointment) => appointment.fecha === selectedDate)
+    : adminAppointmentsCache;
+
+  renderAdminAppointments(appointments);
+  adminStatus.textContent = selectedDate
+    ? `${appointments.length} turnos para la fecha seleccionada.`
+    : `${appointments.length} turnos cargados.`;
 }
 
 function renderAdminAppointments(appointments) {
   if (!appointments.length) {
-    adminAppointments.innerHTML = '<tr><td colspan="5">Todavia no hay turnos cargados.</td></tr>';
+    adminAppointments.innerHTML = '<tr><td colspan="6">No hay turnos para mostrar.</td></tr>';
     return;
   }
 
@@ -265,9 +307,76 @@ function renderAdminAppointments(appointments) {
       <td>${escapeHtml(appointment.horario)}</td>
       <td>${escapeHtml(appointment.nombre)}</td>
       <td>${escapeHtml(appointment.telefono)}</td>
-      <td>${escapeHtml(appointment.estado)}</td>
+      <td><span class="status-badge status-${escapeHtml(appointment.estado)}">${getStatusLabel(appointment.estado)}</span></td>
+      <td>
+        <div class="table-actions">
+          <button class="table-action" type="button" data-action="attended" data-id="${escapeHtml(appointment.id)}" ${appointment.estado === "atendido" || appointment.estado === "cancelado" ? "disabled" : ""}>Atendido</button>
+          <button class="table-action danger" type="button" data-action="cancel" data-id="${escapeHtml(appointment.id)}" ${appointment.estado === "cancelado" || appointment.estado === "atendido" ? "disabled" : ""}>Cancelar</button>
+        </div>
+      </td>
     </tr>
   `).join("");
+}
+
+async function handleAdminAction(event) {
+  const button = event.target.closest("[data-action]");
+
+  if (!button || !isAdmin) {
+    return;
+  }
+
+  const appointmentId = button.dataset.id;
+  const action = button.dataset.action;
+  const appointment = adminAppointmentsCache.find((item) => item.id === appointmentId);
+
+  if (!appointment) {
+    adminStatus.textContent = "No se encontro el turno seleccionado.";
+    return;
+  }
+
+  const actionLabel = action === "cancel" ? "cancelar" : "marcar como atendido";
+  const confirmed = window.confirm(`Confirmar ${actionLabel} el turno de ${appointment.nombre} el ${appointment.fecha} a las ${appointment.horario}.`);
+
+  if (!confirmed) {
+    return;
+  }
+
+  adminStatus.textContent = "Actualizando turno...";
+  setAdminActionsEnabled(false);
+
+  try {
+    const batch = writeBatch(db);
+    const appointmentRef = doc(db, "turnos", appointmentId);
+
+    if (action === "cancel") {
+      batch.update(appointmentRef, {
+        estado: "cancelado",
+        actualizadoEn: serverTimestamp()
+      });
+      batch.delete(doc(db, "turnosOcupados", appointmentId));
+    } else {
+      batch.update(appointmentRef, {
+        estado: "atendido",
+        actualizadoEn: serverTimestamp()
+      });
+    }
+
+    await batch.commit();
+    await loadAdminAppointments();
+
+    if (dateInput.value === appointment.fecha) {
+      await loadAvailability();
+    }
+
+    adminStatus.textContent = action === "cancel"
+      ? "Turno cancelado y horario liberado."
+      : "Turno marcado como atendido.";
+  } catch (error) {
+    console.error("Error al actualizar turno:", error);
+    adminStatus.textContent = getFirestoreErrorMessage(error, "adminAction");
+  } finally {
+    setAdminActionsEnabled(true);
+  }
 }
 
 function updateTimeOptions() {
@@ -284,6 +393,26 @@ function updateTimeOptions() {
 
 function getAvailableTimeCount() {
   return [...timeSelect.options].filter((option) => option.value && !option.disabled).length;
+}
+
+function getStatusLabel(status) {
+  const labels = {
+    pendiente: "Pendiente",
+    atendido: "Atendido",
+    cancelado: "Cancelado"
+  };
+
+  return labels[status] || "Sin estado";
+}
+
+function setAdminActionsEnabled(isEnabled) {
+  if (isEnabled) {
+    return;
+  }
+
+  adminAppointments.querySelectorAll("button").forEach((button) => {
+    button.disabled = true;
+  });
 }
 
 function setFormEnabled(isEnabled) {
@@ -306,6 +435,39 @@ function showStatus(message, type) {
 function clearStatus() {
   statusMessage.textContent = "";
   statusMessage.className = "form-status";
+}
+
+function getAuthErrorMessage(error) {
+  const messages = {
+    "auth/popup-closed-by-user": "Se cerro la ventana de Google antes de completar el ingreso.",
+    "auth/popup-blocked": "El navegador bloqueo la ventana de Google. Permiti ventanas emergentes para este sitio.",
+    "auth/unauthorized-domain": "Este dominio no esta autorizado en Firebase Authentication."
+  };
+
+  return messages[error.code] || "No se pudo iniciar sesion. Intentalo nuevamente.";
+}
+
+function getFirestoreErrorMessage(error, context) {
+  if (error.code === "permission-denied") {
+    const messages = {
+      appointment: "No se pudo reservar. El horario pudo haberse ocupado recien o la sesion necesita volver a validarse.",
+      availability: "No se pudo mostrar la disponibilidad. Inicia sesion nuevamente o revisa la configuracion de App Check.",
+      admin: "No tenes permisos administrativos para ver los turnos.",
+      adminAction: "No tenes permisos para modificar este turno."
+    };
+
+    return messages[context] || "No tenes permiso para realizar esta accion.";
+  }
+
+  if (error.code === "unavailable") {
+    return "No hay conexion con Firebase en este momento. Proba de nuevo en unos minutos.";
+  }
+
+  if (context === "appointment") {
+    return "No se pudo reservar. Es posible que ese horario se haya ocupado recien.";
+  }
+
+  return "Ocurrio un problema. Proba nuevamente.";
 }
 
 function escapeHtml(value = "") {

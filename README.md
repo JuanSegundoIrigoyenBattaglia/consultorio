@@ -22,6 +22,30 @@ Proyecto simple en HTML, CSS y JavaScript para reservar turnos de un consultorio
 8. Activa Firestore Database.
 9. Deja que las colecciones `turnos` y `turnosOcupados` se creen automaticamente al guardar el primer turno.
 
+## App Check
+
+App Check ayuda a que Firestore acepte pedidos hechos desde tu web real y rechace llamadas desde scripts o clientes externos.
+
+1. En Firebase Console, entra a App Check.
+2. Selecciona tu app web.
+3. Elegi el proveedor reCAPTCHA Enterprise.
+4. Crea o selecciona una site key para tu dominio.
+5. Agrega tus dominios autorizados en la configuracion de reCAPTCHA Enterprise:
+   - Tu dominio de Vercel.
+   - El dominio final del cliente, si existe.
+6. Copia la site key.
+7. Pegala en `firebase-config.js`:
+
+```js
+appCheckSiteKey: "TU_RECAPTCHA_ENTERPRISE_SITE_KEY"
+```
+
+8. Subi los cambios a GitHub y espera el deploy de Vercel.
+9. Proba login, consulta de horarios y reserva de turno.
+10. Cuando todo funcione, volve a App Check > Cloud Firestore y activa Enforce.
+
+No actives Enforce antes de desplegar la site key, porque Firestore podria empezar a rechazar los pedidos de la web.
+
 ## Administrador
 
 Para que una cuenta pueda ver los turnos completos:
@@ -89,7 +113,8 @@ service cloud.firestore {
         && request.resource.data.horario is string
         && existsAfter(/databases/$(database)/documents/turnos/$(turnoId));
 
-      allow update, delete: if false;
+      allow update: if false;
+      allow delete: if isAdmin();
     }
 
     match /turnos/{turnoId} {
@@ -102,6 +127,7 @@ service cloud.firestore {
           'telefono',
           'fecha',
           'horario',
+          'aceptaPrivacidad',
           'pacienteEmail',
           'pacienteUid',
           'estado',
@@ -111,12 +137,44 @@ service cloud.firestore {
         && request.resource.data.telefono is string
         && request.resource.data.fecha is string
         && request.resource.data.horario is string
+        && request.resource.data.aceptaPrivacidad == true
         && request.resource.data.pacienteEmail == request.auth.token.email
         && request.resource.data.pacienteUid == request.auth.uid
         && request.resource.data.estado == 'pendiente'
         && existsAfter(/databases/$(database)/documents/turnosOcupados/$(turnoId));
 
-      allow update, delete: if false;
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'estado',
+          'actualizadoEn'
+        ])
+        && request.resource.data.estado in ['pendiente', 'atendido', 'cancelado'];
+
+      allow update: if verifiedUser()
+        && resource.data.estado == 'cancelado'
+        && turnoId == request.resource.data.fecha + "_" + request.resource.data.horario
+        && request.resource.data.keys().hasOnly([
+          'nombre',
+          'telefono',
+          'fecha',
+          'horario',
+          'aceptaPrivacidad',
+          'pacienteEmail',
+          'pacienteUid',
+          'estado',
+          'creadoEn'
+        ])
+        && request.resource.data.nombre is string
+        && request.resource.data.telefono is string
+        && request.resource.data.fecha is string
+        && request.resource.data.horario is string
+        && request.resource.data.aceptaPrivacidad == true
+        && request.resource.data.pacienteEmail == request.auth.token.email
+        && request.resource.data.pacienteUid == request.auth.uid
+        && request.resource.data.estado == 'pendiente'
+        && existsAfter(/databases/$(database)/documents/turnosOcupados/$(turnoId));
+
+      allow delete: if false;
     }
   }
 }
@@ -138,6 +196,7 @@ Cada turno se guarda en Firestore con esta estructura:
   telefono: "11 2345 6789",
   fecha: "2026-05-15",
   horario: "09:30",
+  aceptaPrivacidad: true,
   pacienteEmail: "paciente@gmail.com",
   pacienteUid: "uid-de-firebase-auth",
   estado: "pendiente",
@@ -146,3 +205,13 @@ Cada turno se guarda en Firestore con esta estructura:
 ```
 
 La disponibilidad se guarda aparte en `turnosOcupados`, sin nombre ni telefono, para que los usuarios puedan ver horarios no disponibles sin acceder a datos privados.
+
+Los estados posibles del turno son:
+
+- `pendiente`: reservado y pendiente de atencion.
+- `atendido`: marcado por administracion cuando el paciente ya fue atendido.
+- `cancelado`: cancelado por administracion; el horario vuelve a quedar disponible.
+
+## Privacidad
+
+La web informa que guarda nombre, telefono, email de Google, fecha y horario del turno. Esos datos se usan solo para gestionar reservas y contacto operativo. Los datos completos solo puede verlos una cuenta administrativa autorizada por UID en Firestore.

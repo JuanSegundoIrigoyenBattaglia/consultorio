@@ -5,5 +5,6 @@ export const firebaseConfig = {
   storageBucket: "consultorio-f58ef.firebasestorage.app",
   messagingSenderId: "496831442217",
   appId: "1:496831442217:web:bb254f9540f0dd3c4bdb38",
-  measurementId: "G-40RH40R39L"
+  measurementId: "G-40RH40R39L",
+  appCheckSiteKey: ""
 };

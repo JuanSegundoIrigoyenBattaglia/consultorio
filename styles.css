@@ -159,6 +159,7 @@ a {
 .services-section,
 .appointment-section,
 .admin-section,
+.privacy-section,
 .contact-section {
   padding: clamp(44px, 7vw, 82px) clamp(20px, 5vw, 72px);
 }
@@ -170,6 +171,7 @@ a {
 
 .section-heading h2,
 .appointment-copy h2,
+.privacy-section h2,
 .contact-section h2 {
   font-size: clamp(2rem, 4vw, 3.2rem);
 }
@@ -196,6 +198,7 @@ a {
 
 .service-card p,
 .appointment-copy p,
+.privacy-section p,
 .contact-section p {
   color: var(--muted);
 }
@@ -267,6 +270,21 @@ a {
   outline: 3px solid rgba(15, 118, 110, 0.16);
 }
 
+.appointment-form .privacy-consent {
+  grid-template-columns: 18px 1fr;
+  align-items: start;
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.appointment-form .privacy-consent input {
+  width: 18px;
+  min-height: 18px;
+  margin-top: 3px;
+  padding: 0;
+}
+
 .appointment-form button {
   width: 100%;
   margin-top: 4px;
@@ -325,6 +343,22 @@ a {
   margin-bottom: 18px;
 }
 
+.admin-filter {
+  display: grid;
+  gap: 7px;
+  color: #25343a;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.admin-filter input {
+  min-height: 48px;
+  padding: 0 12px;
+  border: 1px solid #cbdad6;
+  border-radius: 8px;
+  font: inherit;
+}
+
 .appointments-table-wrap {
   overflow-x: auto;
   border: 1px solid var(--line);
@@ -333,7 +367,7 @@ a {
 
 .appointments-table {
   width: 100%;
-  min-width: 680px;
+  min-width: 860px;
   border-collapse: collapse;
   background: #ffffff;
 }
@@ -353,6 +387,95 @@ a {
 
 .appointments-table tr:last-child td {
   border-bottom: 0;
+}
+
+.status-badge {
+  display: inline-flex;
+  min-width: 92px;
+  justify-content: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.status-pendiente {
+  color: #845400;
+  background: #fff3cd;
+}
+
+.status-atendido {
+  color: #0f5132;
+  background: #d1e7dd;
+}
+
+.status-cancelado {
+  color: #842029;
+  background: #f8d7da;
+}
+
+.table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.table-action {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid #bad5cf;
+  border-radius: 8px;
+  color: var(--primary);
+  background: #ffffff;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.table-action:hover {
+  color: #ffffff;
+  background: var(--primary);
+}
+
+.table-action.danger {
+  color: var(--danger);
+  border-color: #f1b7b2;
+}
+
+.table-action.danger:hover {
+  color: #ffffff;
+  background: var(--danger);
+}
+
+.table-action:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.privacy-section {
+  background: #f7fbfa;
+}
+
+.privacy-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.privacy-grid article {
+  padding: 22px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.privacy-grid h3 {
+  margin: 0 0 10px;
+}
+
+.privacy-grid p {
+  margin: 0;
 }
 
 .site-footer {
@@ -380,6 +503,10 @@ a {
   }
 
   .services-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .privacy-grid {
     grid-template-columns: 1fr;
   }
 

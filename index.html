@@ -20,6 +20,7 @@
       <a href="#servicios">Servicios</a>
       <a href="#turnos">Turnos</a>
       <a href="#adminPanel" id="adminNavLink" hidden>Administracion</a>
+      <a href="#privacidad">Privacidad</a>
       <a href="#contacto">Contacto</a>
     </nav>
   </header>
@@ -111,6 +112,11 @@
           </select>
         </label>
 
+        <label class="privacy-consent" for="privacyConsent">
+          <input id="privacyConsent" name="privacyConsent" type="checkbox" required>
+          Acepto que mis datos se usen para gestionar este turno.
+        </label>
+
         <button type="submit" id="submitButton">Confirmar turno</button>
         <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
       </form>
@@ -122,6 +128,11 @@
         <h2 id="admin-titulo">Turnos reservados</h2>
       </div>
       <div class="admin-toolbar">
+        <label class="admin-filter" for="adminDateFilter">
+          Filtrar por fecha
+          <input id="adminDateFilter" type="date">
+        </label>
+        <button class="secondary-button" type="button" id="clearAdminFilterButton">Ver todos</button>
         <button class="secondary-button" type="button" id="refreshAdminButton">Actualizar turnos</button>
         <p class="form-status" id="adminStatus" role="status" aria-live="polite"></p>
       </div>
@@ -134,14 +145,40 @@
               <th>Paciente</th>
               <th>Telefono</th>
               <th>Estado</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody id="adminAppointments">
             <tr>
-              <td colspan="5">Todavia no hay turnos cargados.</td>
+              <td colspan="6">Todavia no hay turnos cargados.</td>
             </tr>
           </tbody>
         </table>
+      </div>
+    </section>
+
+    <section class="privacy-section" id="privacidad" aria-labelledby="privacidad-titulo">
+      <div class="section-heading">
+        <p class="eyebrow">Privacidad</p>
+        <h2 id="privacidad-titulo">Politica de privacidad</h2>
+      </div>
+      <div class="privacy-grid">
+        <article>
+          <h3>Datos que guardamos</h3>
+          <p>Nombre, telefono, email de la cuenta de Google, fecha y horario del turno.</p>
+        </article>
+        <article>
+          <h3>Para que se usan</h3>
+          <p>Se usan solamente para gestionar la reserva, identificar al paciente y contactar ante cambios del turno.</p>
+        </article>
+        <article>
+          <h3>Quien puede verlos</h3>
+          <p>Solo el personal administrativo autorizado puede ver los datos completos. Los pacientes solo ven horarios no disponibles.</p>
+        </article>
+        <article>
+          <h3>Seguridad</h3>
+          <p>El acceso se protege con inicio de sesion de Google, reglas de Firestore y App Check cuando esta activado.</p>
+        </article>
       </div>
     </section>
 

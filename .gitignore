@@ -1,0 +1,41 @@
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Dependencias y builds
+node_modules/
+dist/
+build/
+.vercel/
+.firebase/
+
+# Variables de entorno y secretos locales
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Firebase / Google Cloud claves privadas
+*-service-account.json
+*serviceAccount*.json
+firebase-adminsdk*.json
+google-services.json
+GoogleService-Info.plist
+
+# Archivos temporales
+tmp/
+temp/
+*.tmp

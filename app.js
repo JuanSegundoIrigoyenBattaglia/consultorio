@@ -89,7 +89,7 @@ onAuthStateChanged(auth, async (user) => {
   logoutButton.hidden = false;
   setFormEnabled(true);
 
-  isAdmin = await checkAdmin(user.email);
+  isAdmin = await checkAdmin(user.uid);
   adminPanel.hidden = !isAdmin;
   adminNavLink.hidden = !isAdmin;
 
@@ -218,14 +218,14 @@ async function loadAvailability() {
   }
 }
 
-async function checkAdmin(email) {
-  if (!email) {
+async function checkAdmin(uid) {
+  if (!uid) {
     return false;
   }
 
   try {
-    const adminSnapshot = await getDoc(doc(db, "admins", email));
-    return adminSnapshot.exists();
+    const adminSnapshot = await getDoc(doc(db, "admins", uid));
+    return adminSnapshot.exists() && adminSnapshot.data().activo === true;
   } catch (error) {
     console.error("Error al verificar administrador:", error);
     return false;

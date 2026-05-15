@@ -24,23 +24,29 @@ Proyecto simple en HTML, CSS y JavaScript para reservar turnos de un consultorio
 
 ## Administrador
 
-Para que un mail pueda ver los turnos completos:
+Para que una cuenta pueda ver los turnos completos:
 
-1. Inicia sesion una vez en la web con el mail administrativo.
-2. En Firestore, crea una coleccion llamada `admins`.
-3. Dentro de `admins`, crea un documento cuyo ID sea exactamente el mail administrativo, por ejemplo:
+1. Inicia sesion una vez en la web con la cuenta administrativa.
+2. En Firebase, entra a Authentication > Users.
+3. Copia el UID del usuario administrativo.
+4. En Firestore, crea una coleccion llamada `admins`.
+5. Dentro de `admins`, crea un documento cuyo ID sea exactamente ese UID.
+
+Ejemplo de ID de documento:
 
 ```text
-admin@consultorio.com
+AbC123UidDelUsuarioAdmin
 ```
 
-4. Podes agregarle un campo de referencia, por ejemplo:
+6. Agrega este campo:
 
 ```text
 activo    boolean    true
 ```
 
-El mail autorizado no queda escrito en el codigo publico. Firebase lo valida desde las reglas usando el documento de la coleccion `admins`.
+El mail autorizado no queda escrito en el codigo publico. Firebase valida al administrador usando su UID de Authentication y el documento privado en `admins`.
+
+Importante: si antes habias creado un documento con el mail como ID, reemplazalo por uno con el UID. El documento con el mail ya no sirve para autorizar.
 
 ## Reglas de Firestore
 
@@ -61,11 +67,11 @@ service cloud.firestore {
 
     function isAdmin() {
       return verifiedUser()
-        && exists(/databases/$(database)/documents/admins/$(request.auth.token.email));
+        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.activo == true;
     }
 
-    match /admins/{adminEmail} {
-      allow get: if verifiedUser() && adminEmail == request.auth.token.email;
+    match /admins/{adminUid} {
+      allow get: if verifiedUser() && adminUid == request.auth.uid;
       allow list, create, update, delete: if false;
     }
 

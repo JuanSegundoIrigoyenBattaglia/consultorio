@@ -9,6 +9,7 @@ Proyecto simple en HTML, CSS y JavaScript para reservar turnos de un consultorio
 - `app.js`: logica del formulario y guardado en Firestore.
 - `firebase-config.js`: credenciales reales de Firebase.
 - `firebase-config.example.js`: ejemplo para conservar como referencia.
+- `functions/`: Cloud Functions opcionales para enviar confirmaciones por email o WhatsApp.
 
 ## Configurar Firebase
 
@@ -20,7 +21,7 @@ Proyecto simple en HTML, CSS y JavaScript para reservar turnos de un consultorio
 6. En Authentication > Sign-in method, habilita Google.
 7. En Authentication > Settings > Authorized domains, agrega el dominio de Vercel si no aparece.
 8. Activa Firestore Database.
-9. Deja que las colecciones `turnos` y `turnosOcupados` se creen automaticamente al guardar el primer turno.
+9. Deja que las colecciones `turnos`, `turnosOcupados` y `userTurnosPendientes` se creen automaticamente al guardar el primer turno.
 
 ## App Check
 
@@ -45,6 +46,25 @@ appCheckSiteKey: "TU_RECAPTCHA_ENTERPRISE_SITE_KEY"
 10. Cuando todo funcione, volve a App Check > Cloud Firestore y activa Enforce.
 
 No actives Enforce antes de desplegar la site key, porque Firestore podria empezar a rechazar los pedidos de la web.
+
+## Confirmaciones por email o WhatsApp
+
+El envio automatico no debe hacerse desde el frontend, porque las credenciales del proveedor quedarian visibles. La carpeta `functions/` contiene Cloud Functions preparadas para:
+
+- Enviar confirmacion cuando se crea un turno pendiente.
+- Enviar aviso cuando un turno pasa a estado `cancelado`.
+- Usar email con Brevo si configuras `BREVO_API_KEY`.
+- Usar WhatsApp con Twilio si configuras las variables de Twilio.
+
+Pasos generales:
+
+1. Instala Firebase CLI e inicia sesion.
+2. Entra a `functions/`.
+3. Ejecuta `npm install`.
+4. Crea variables de entorno tomando como guia `functions/.env.example`.
+5. Despliega las funciones con Firebase CLI.
+
+No subas archivos `.env` ni claves privadas a GitHub. El `.gitignore` ya los ignora.
 
 ## Administrador
 
@@ -74,7 +94,7 @@ Importante: si antes habias creado un documento con el mail como ID, reemplazalo
 
 ## Reglas de Firestore
 
-Estas reglas permiten que usuarios registrados vean solo horarios ocupados, creen turnos, bloqueen sobreturnos y que solo el administrador lea los datos completos.
+Estas reglas permiten que usuarios registrados vean solo horarios ocupados, gestionen su propio turno, creen como maximo un turno pendiente, bloqueen sobreturnos y que solo el administrador lea todos los datos.
 
 ```js
 rules_version = '2';
@@ -114,11 +134,44 @@ service cloud.firestore {
         && existsAfter(/databases/$(database)/documents/turnos/$(turnoId));
 
       allow update: if false;
-      allow delete: if isAdmin();
+
+      allow delete: if isAdmin()
+        || (
+          verifiedUser()
+          && getAfter(/databases/$(database)/documents/turnos/$(turnoId)).data.pacienteUid == request.auth.uid
+          && getAfter(/databases/$(database)/documents/turnos/$(turnoId)).data.estado == 'cancelado'
+        );
+    }
+
+    match /userTurnosPendientes/{userUid} {
+      allow read: if verifiedUser() && userUid == request.auth.uid;
+
+      allow create: if verifiedUser()
+        && userUid == request.auth.uid
+        && request.resource.data.keys().hasOnly([
+          'turnoId',
+          'fecha',
+          'horario',
+          'pacienteUid',
+          'creadoEn'
+        ])
+        && request.resource.data.pacienteUid == request.auth.uid
+        && request.resource.data.turnoId == request.resource.data.fecha + "_" + request.resource.data.horario
+        && existsAfter(/databases/$(database)/documents/turnos/$(request.resource.data.turnoId));
+
+      allow update: if false;
+
+      allow delete: if isAdmin()
+        || (
+          verifiedUser()
+          && userUid == request.auth.uid
+          && getAfter(/databases/$(database)/documents/turnos/$(resource.data.turnoId)).data.pacienteUid == request.auth.uid
+          && getAfter(/databases/$(database)/documents/turnos/$(resource.data.turnoId)).data.estado == 'cancelado'
+        );
     }
 
     match /turnos/{turnoId} {
-      allow read: if isAdmin();
+      allow read: if isAdmin() || (verifiedUser() && resource.data.pacienteUid == request.auth.uid);
 
       allow create: if verifiedUser()
         && turnoId == request.resource.data.fecha + "_" + request.resource.data.horario
@@ -141,7 +194,8 @@ service cloud.firestore {
         && request.resource.data.pacienteEmail == request.auth.token.email
         && request.resource.data.pacienteUid == request.auth.uid
         && request.resource.data.estado == 'pendiente'
-        && existsAfter(/databases/$(database)/documents/turnosOcupados/$(turnoId));
+        && existsAfter(/databases/$(database)/documents/turnosOcupados/$(turnoId))
+        && existsAfter(/databases/$(database)/documents/userTurnosPendientes/$(request.auth.uid));
 
       allow update: if isAdmin()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
@@ -172,7 +226,19 @@ service cloud.firestore {
         && request.resource.data.pacienteEmail == request.auth.token.email
         && request.resource.data.pacienteUid == request.auth.uid
         && request.resource.data.estado == 'pendiente'
-        && existsAfter(/databases/$(database)/documents/turnosOcupados/$(turnoId));
+        && existsAfter(/databases/$(database)/documents/turnosOcupados/$(turnoId))
+        && existsAfter(/databases/$(database)/documents/userTurnosPendientes/$(request.auth.uid));
+
+      allow update: if verifiedUser()
+        && resource.data.pacienteUid == request.auth.uid
+        && resource.data.estado == 'pendiente'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'estado',
+          'actualizadoEn'
+        ])
+        && request.resource.data.estado == 'cancelado'
+        && !existsAfter(/databases/$(database)/documents/turnosOcupados/$(turnoId))
+        && !existsAfter(/databases/$(database)/documents/userTurnosPendientes/$(request.auth.uid));
 
       allow delete: if false;
     }
@@ -206,11 +272,15 @@ Cada turno se guarda en Firestore con esta estructura:
 
 La disponibilidad se guarda aparte en `turnosOcupados`, sin nombre ni telefono, para que los usuarios puedan ver horarios no disponibles sin acceder a datos privados.
 
+El limite de un turno pendiente por usuario se guarda en `userTurnosPendientes/{uid}`. Si el paciente cancela su turno, ese marcador se elimina y puede reservar nuevamente.
+
 Los estados posibles del turno son:
 
 - `pendiente`: reservado y pendiente de atencion.
 - `atendido`: marcado por administracion cuando el paciente ya fue atendido.
 - `cancelado`: cancelado por administracion; el horario vuelve a quedar disponible.
+
+Los pacientes tambien pueden cancelar su propio turno pendiente. Para modificarlo, la web cancela el turno anterior y precarga el formulario para elegir una nueva fecha y horario.
 
 ## Privacidad
 

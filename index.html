@@ -19,6 +19,7 @@
     <nav class="main-nav" aria-label="Navegacion principal">
       <a href="#servicios">Servicios</a>
       <a href="#turnos">Turnos</a>
+      <a href="#misTurnos" id="myAppointmentsNavLink" hidden>Mis turnos</a>
       <a href="#adminPanel" id="adminNavLink" hidden>Administracion</a>
       <a href="#privacidad">Privacidad</a>
       <a href="#contacto">Contacto</a>
@@ -120,6 +121,32 @@
         <button type="submit" id="submitButton">Confirmar turno</button>
         <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
       </form>
+    </section>
+
+    <section class="my-appointments-section" id="misTurnos" hidden aria-labelledby="mis-turnos-titulo">
+      <div class="section-heading">
+        <p class="eyebrow">Paciente</p>
+        <h2 id="mis-turnos-titulo">Mis turnos</h2>
+      </div>
+      <p class="section-note">Podes cancelar tu turno pendiente o modificarlo cancelandolo primero y eligiendo una nueva fecha.</p>
+      <div class="appointments-table-wrap">
+        <table class="appointments-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Horario</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="myAppointments">
+            <tr>
+              <td colspan="4">Inicia sesion para ver tus turnos.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="form-status" id="myAppointmentsStatus" role="status" aria-live="polite"></p>
     </section>
 
     <section class="admin-section" id="adminPanel" hidden aria-labelledby="admin-titulo">
